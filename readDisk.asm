@@ -1,6 +1,6 @@
-[bits 16]
+bits 16
 global ReadDisk
-global BOOT_DISK
+global BOOT_DISK_ID
 extern PrintString
 extern SECOND_STAGE_ORIGIN
 
@@ -10,20 +10,12 @@ ReadDisk:
 
     mov bx, DiskReadStarted
     call PrintString
-
-    mov ah, 0x02 
-    mov bx, SECOND_STAGE_ORIGIN
-    mov al, 32 ; Read 2048 bytes - 4 sectors (enough for now)
-    mov dl, 0; Read from drive in boot_drive
     
-    ;Begin reading hard drive from
-    mov ch, 0x00; Cylinder 0
-    mov dh, 0x00; Head 0
-
-    mov cl, 0x02; Start reading from sector 2
-
-    int 0x13; Interrupt for reading from disk
-
+    mov si, DAPS
+    mov ah, 0x42
+    mov dl, [BOOT_DISK_ID]
+    int 0x13
+   
     jc DiskReadFailed
 
     mov bx, DiskReadSuccess
@@ -37,16 +29,16 @@ DiskReadFailed:
     jmp $
 
 
-
-; Second stage begins at 0x7e00 - 512 bytes (length of first stage)
-; After 0x7c00 (origin of 1st stage)
-
-
 section .data
 
+DAPS:
+    db 0x10 
+    db 0
+    dw 31 ; Number of sectors to read 31 - without boot sector
+    dw 0x8000 ; Address where to store data
+    dw 0
+    dq 1 ; Absolute number of the start sector - 2 st sector has number 1
 
-
-BOOT_DISK db 0
 
 DiskReadError:
     db 'Disk read failed', 0xa, 0xd, 0
@@ -56,3 +48,5 @@ DiskReadSuccess:
 
 DiskReadStarted:
     db 'Disk read started', 0xa, 0xd, 0
+
+BOOT_DISK_ID db 0

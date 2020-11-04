@@ -26,5 +26,6 @@ SECTIONS
     /* Place the boot signature at LMA/VMA 0x7DFE */
     .sig 0x7DFE : {
         SHORT(0xaa55);
-    }
+        . +=  0x3E00;
+    } 
 }
