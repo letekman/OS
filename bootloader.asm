@@ -1,12 +1,13 @@
 bits 16
+
 global SECOND_STAGE_ORIGIN
+global _start
+
 extern PrintString
 extern ReadDisk
 extern BOOT_DISK_ID
 
 
-
-global _start
 section .text
     _start:
 
@@ -20,6 +21,9 @@ section .text
     call PrintString
 
     call ReadDisk
+
+
+    jmp 0:SECOND_STAGE_ORIGIN
 
 
 segment .data

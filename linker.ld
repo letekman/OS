@@ -7,25 +7,46 @@ INPUT (
 	bootloader.o
 	print.o
     readDisk.o
+    secondStage.o
+    gdt_64.o
+    paging.o
+    CPUID.o
+    librust_os.a
 )
+
+
 
 SECTIONS
 {
-    . = 0x7C00;
-    .text : SUBALIGN(2) {
+    .bootloader 0x7C00 : SUBALIGN(2) {
         bootloader.o(.text);
-        *(.text);
+        print.o(.text);
+        readDisk.o(.text);
     }
    
-    /* Place the data after the code */
-    .data : SUBALIGN(2) {
-        *(.data);
-        *(.rodata*);
+    .bootloader_data : SUBALIGN(2) {
+        bootloader.o(.data);
+        print.o(.data);
+        readDisk.o(.data);
+
+        bootloader.o(.rodata);
+        print.o(.rodata);
+        readDisk.o(.rodata);
+       
     }
 
     /* Place the boot signature at LMA/VMA 0x7DFE */
     .sig 0x7DFE : {
         SHORT(0xaa55);
-        . +=  0x3E00;
     } 
+
+    .secondStage 0x8000  : {
+        *(.text);
+        *(.data);
+        librust_os.a(*);
+        FILL(0x00);
+        . += 0x3E00;
+    }
+
+    
 }
