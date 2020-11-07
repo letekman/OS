@@ -4,7 +4,6 @@ extern dataseg
 extern CheckCPUID
 extern SetupPaging
 extern CheckLongMode
-extern SetupGDT64
 
 bits 16
 
@@ -45,6 +44,8 @@ Start64:
 
 ; Simple hack to enable 21th address line so all of the memory
 ; can be accessed......Supposedly works on most of the machines
+
+bits 16
 
 EnableA20:
     ;input from port 92h to al
