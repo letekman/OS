@@ -13,5 +13,5 @@ run:
 .PHONY: clean
 
 clean:
-	rm bootloader.o print.o readDisk.o paging.o CPUID.o gdt_64.o secondStage.o bootloader.elf
+	rm $(elf_files) bootloader.elf
 
