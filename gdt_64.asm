@@ -3,7 +3,6 @@ bits 16
 global gdt_descriptor
 global codeseg
 global dataseg
-global SetupGDT64
 
 gdt_start:
 
@@ -58,9 +57,3 @@ gdt_descriptor:
 
 codeseg equ gdt_codedesc - gdt_start
 dataseg equ gdt_datadesc - gdt_start
-
-
-SetupGDT64:
-    mov [gdt_codedesc + 6], byte 10101111b
-    mov [gdt_datadesc + 6], byte 10101111b
-    ret
