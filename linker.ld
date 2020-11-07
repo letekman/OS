@@ -1,5 +1,6 @@
 OUTPUT_FORMAT(elf64-x86-64)
-ENTRY(_start)
+SEARCH_DIR(kernel/target/target/release)
+ENTRY(_bootstart)
 OUTPUT(
 	bootloader.elf
 )
