@@ -48,6 +48,11 @@ SECTIONS
         FILL(0x00);
         . += 0x3E00;
     }
+    .idt BLOCK(0x1000) : ALIGN(0x1000)
+    {
+        _IDT = .;
+        . = . + 0x1000;
+    }
 
     
 }
