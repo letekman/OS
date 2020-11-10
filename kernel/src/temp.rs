@@ -48,39 +48,39 @@ macro_rules! popall {
     }};
 }
 #[naked]
-pub unsafe extern "C" fn isr0() -> () {
+pub extern "C" fn isr0() -> () {
+
         pushall!();
-        print!("_");
-        serial_print!("_");
+        print!(".");
         PIC8259::sendEOI(0);
         popall!();
         llvm_asm!("iretq");
+    }
 }
 #[naked]
-pub unsafe extern "C" fn isr1() -> () {
+pub extern "C" fn isr1() -> () {
+    unsafe{
 
         pushall!();
         let scancode: u8 = io_ports::inb(0x60);
-        serial_print!("isr1");
-        print!("isr1");
-        llvm_asm!("push rax" :::: "intel", "volatile");
-        llvm_asm!("push rax" :::: "intel", "volatile");
-        llvm_asm!("pop rax" :::: "intel", "volatile");
-        llvm_asm!("pop rax" :::: "intel", "volatile");
-
+        print!("{}", scancode);
         PIC8259::sendEOI(1);
         popall!();
     
         llvm_asm!("iretq");
+    }
 }
 #[naked]
-pub unsafe extern "C" fn isr2() -> () {
+pub extern "C" fn isr2() -> () {
+    unsafe{
+
         pushall!();
         println!("isr2 :(");
         PIC8259::sendEOI(2);
         PIC8259::sendEOI(10);
         popall!();
         llvm_asm!("iretq");
+    }
 }
 
 #[naked]

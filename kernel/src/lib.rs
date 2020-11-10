@@ -24,7 +24,7 @@ pub extern "C" fn _start() -> ! {
         PIC8259::set_irq_mask(1);
         PIC8259::set_irq_mask(2);
         idt::load_idt();
-        //stack_overflow();
+        //divide_by_zero();
     }
     //let mut i = 0;
     loop {
@@ -34,6 +34,11 @@ pub extern "C" fn _start() -> ! {
         // }
         //println!("hey {} ", i);
         //i = i + 1;
+    }
+}
+fn divide_by_zero() {
+    unsafe {
+        llvm_asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel")
     }
 }
 #[allow(unconditional_recursion)]
