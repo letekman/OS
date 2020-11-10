@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(llvm_asm)]
 #![feature(naked_functions)]
+#![feature(abi_x86_interrupt)]
 use core::panic::PanicInfo;
 
 #[macro_use]

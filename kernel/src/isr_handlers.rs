@@ -51,7 +51,6 @@ macro_rules! popall {
 #[naked]
 pub unsafe extern "C" fn isr0() -> () {
     pushall!();
-    serial_println!("isr0 heree");
     PIC8259::sendEOI(0);
     popall!();
     llvm_asm!("iretq");
@@ -62,6 +61,8 @@ pub unsafe extern "C" fn isr0() -> () {
 pub unsafe extern "C" fn isr1() -> () {
     pushall!();
     println!("{}",io_ports::inb(0x60));
+    serial_println!("ISR1 DZIALA");
+
     PIC8259::sendEOI(1);
     popall!();
 
@@ -78,12 +79,7 @@ pub unsafe extern "C" fn isr2() -> () {
     popall!();
     llvm_asm!("iretq");
 }
-#[no_mangle]
-#[inline(always)]
-#[naked]
-pub unsafe extern "C" fn double_fault() -> () {
-    serial_println!("DOUBLE FAULT");
-}
+
 #[no_mangle]
 #[inline(always)]
 #[naked]
@@ -93,14 +89,50 @@ pub unsafe extern "C" fn div_zero() -> () {
 #[no_mangle]
 #[inline(always)]
 #[naked]
-pub unsafe extern "C" fn general_protect_fault() -> () {
-    serial_println!("GENERAL PROTECTION FAULT");
+pub unsafe extern "C" fn debug() -> () {
+    serial_println!("DEBUG");
 }
 #[no_mangle]
 #[inline(always)]
 #[naked]
-pub unsafe extern "C" fn segment_not_present() -> () {
-    serial_println!("SEGMENT NOT PRESENT");
+pub unsafe extern "C" fn non_maskable_interrupt() -> () {
+    serial_println!("NON_MASKABLE_INTERRUPT");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn breakpoint() -> () {
+    serial_println!("breakpoint");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn overflow() -> () {
+    serial_println!("overflow");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn bound_range_exceeded() -> () {
+    serial_println!("bound_range_exceeded");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn invalid_opcode() -> () {
+    serial_println!("invalid_opcode");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn device_not_avaiable() -> () {
+    serial_println!("device_not_avaiable");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn double_fault() -> () {
+    serial_println!("DOUBLE FAULT");
 }
 #[no_mangle]
 #[inline(always)]
@@ -111,12 +143,63 @@ pub unsafe extern "C" fn invalid_tss() -> () {
 #[no_mangle]
 #[inline(always)]
 #[naked]
+pub unsafe extern "C" fn segment_not_present() -> () {
+    serial_println!("SEGMENT NOT PRESENT");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
 pub unsafe extern "C" fn stack_segment_fault() -> () {
     serial_println!("STACK SEGMENT FAULT");
 }
 #[no_mangle]
 #[inline(always)]
 #[naked]
+pub unsafe extern "C" fn general_protect_fault() -> () {
+    serial_println!("GENERAL PROTECTION FAULT");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
 pub unsafe extern "C" fn page_fault() -> () {
     serial_println!("PAGE FAULT");
+}
+
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn x87_floating_point() -> () {
+    serial_println!("x87_floating_point");
+}
+
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn alignment_check() -> () {
+    serial_println!("alignment_check");
+}
+
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn machine_check() -> () {
+    serial_println!("machine check");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn simd() -> () {
+    serial_println!("simd");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn virtualization() -> () {
+    serial_println!("virtualization");
+}
+#[no_mangle]
+#[inline(always)]
+#[naked]
+pub unsafe extern "C" fn security_exception() -> () {
+    serial_println!("security_exception");
 }
