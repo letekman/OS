@@ -36,6 +36,8 @@ Start64:
     mov ecx, 500  
     rep stosq
 
+
+
     extern _start
     jmp _start
     

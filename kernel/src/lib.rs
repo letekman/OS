@@ -2,7 +2,8 @@
 #![no_main]
 #![feature(llvm_asm)]
 #![feature(naked_functions)]
-#![feature(abi_x86_interrupt)]
+#![feature(fmt_as_str)]
+#![feature(core_intrinsics)]
 use core::panic::PanicInfo;
 
 #[macro_use]
@@ -17,14 +18,22 @@ mod PIC8259;
 mod idt;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("Hello World{} 123: {}", "!",123);
-    serial_println!("YO");
+    //println!("Hello World{} 123: {}", "!",123);
+    serial_println!("STARTED");
     unsafe{
         PIC8259::set_irq_mask(0);
         PIC8259::set_irq_mask(1);
         PIC8259::set_irq_mask(2);
+
+        let a = "GFDSFdfsgfdssdfgdsg";
+
+        println!("yay");
+
         idt::load_idt();
-        //divide_by_zero();
+        
+        println!("Hello");
+        assert_eq!(1, 1);
+
     }
     //let mut i = 0;
     loop {
@@ -49,6 +58,6 @@ fn stack_overflow(){
 /// This function is called on panic.
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    //println!("{}", info);
+    println!("{}", info);
     loop {}
 }

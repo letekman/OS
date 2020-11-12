@@ -9,7 +9,7 @@ $(elf_files): %.o: %.asm
 	nasm -f elf64 $< -o $@
 
 run:
-	qemu-system-x86_64 -hda bootloader.bin  -serial stdio
+	qemu-system-x86_64 -hda bootloader.bin -serial stdio
 
 .PHONY: clean
 
