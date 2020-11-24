@@ -15,45 +15,21 @@ mod isr_handlers;
 mod PIC8259;
 
 
+
 mod idt;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    //println!("Hello World{} 123: {}", "!",123);
-    serial_println!("STARTED");
+    println!("Booted");
     unsafe{
         PIC8259::set_irq_mask(0);
         PIC8259::set_irq_mask(1);
         PIC8259::set_irq_mask(2);
-
-        let a = "GFDSFdfsgfdssdfgdsg";
-
-        println!("yay");
-
         idt::load_idt();
         
-        println!("Hello");
-        assert_eq!(1, 1);
-
+        println!("Hello from Rust");
     }
-    //let mut i = 0;
     loop {
-        // unsafe{
-
-        //     llvm_asm!("hlt" :::: "volatile");
-        // }
-        //println!("hey {} ", i);
-        //i = i + 1;
     }
-}
-fn divide_by_zero() {
-    unsafe {
-        llvm_asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel")
-    }
-}
-#[allow(unconditional_recursion)]
-fn stack_overflow(){
-    stack_overflow();
-    volatile::Volatile::new(0).read();
 }
 /// This function is called on panic.
 #[panic_handler]
