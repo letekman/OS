@@ -39,7 +39,7 @@ gdt_datadesc:
     db 10010010b ; Here's the change
     ;      -
     
-    db 10101111b; Setting The Flags and GDT_LIMIT cnd.
+    db 10001111b; Setting The Flags and GDT_LIMIT cnd.
 
     db 0x00; GDT_BASE cnd.
 gdt_end:

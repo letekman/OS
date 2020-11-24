@@ -1,5 +1,6 @@
 OUTPUT_FORMAT(elf64-x86-64)
-ENTRY(_start)
+SEARCH_DIR(kernel/target/target/release)
+ENTRY(_bootstart)
 OUTPUT(
 	bootloader.elf
 )
@@ -40,13 +41,18 @@ SECTIONS
         SHORT(0xaa55);
     } 
 
-    .secondStage 0x8000  : {
+    .secondStage 0x8000 :
+    {
         *(.text);
         *(.data);
         librust_os.a(*);
         FILL(0x00);
-        . += 0x3E00;
+        . = ALIGN(0x4000);
     }
-
+    .idt BLOCK(0x1000) :
+    {
+        _IDT = .;
+        . += 0x1000;
+    }
     
 }

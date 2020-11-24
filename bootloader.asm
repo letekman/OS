@@ -1,7 +1,7 @@
 bits 16
 
 global SECOND_STAGE_ORIGIN
-global _start
+global _bootstart
 
 extern PrintString
 extern ReadDisk
@@ -9,7 +9,7 @@ extern BOOT_DISK_ID
 
 
 section .text
-    _start:
+    _bootstart:
 
     mov [BOOT_DISK_ID], dl
 
