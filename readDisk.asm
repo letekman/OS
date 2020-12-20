@@ -36,11 +36,10 @@ section .data
 DAPS:
     db 0x10 
     db 0
-    dw 32 ; Number of sectors to read 31 - without boot sector
+    dw 128 ; Number of sectors to read 31 - without boot sector
     dw SECOND_STAGE_ORIGIN ; Address where to store data
     dw 0
     dq 2 ; Absolute number of the start sector - 2 st sector has number 1
-
 
 DiskReadError:
     db 'Disk read failed', 0xa, 0xd, 0

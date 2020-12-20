@@ -12,7 +12,11 @@ lazy_static! {
 #[doc(hidden)]
 pub fn _print(args: ::core::fmt::Arguments) {
     use core::fmt::Write;
-    SERIAL1.lock().write_fmt(args).expect("Printing to serial failed");
+    unsafe{
+        asm!("cli", options(nomem, nostack));
+        SERIAL1.lock().write_fmt(args).expect("Printing to serial failed");
+        asm!("sti", options(nomem, nostack));
+    }
 }
 
 /// Prints to the host through the serial interface.

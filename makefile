@@ -3,16 +3,16 @@ linker_file = linker.ld
 compile: $(elf_files) $(linker_file)
 	cd kernel; cargo +nightly build --release
 	ld --script $(linker_file)
-	objcopy -O binary bootloader.elf bootloader.bin
+	objcopy -O binary --gap-fill 0x00 --pad-to 0x20000 bootloader.elf bootloader.bin
 
 $(elf_files): %.o: %.asm
 	nasm -f elf64 $< -o $@
 
 run:
 	qemu-system-x86_64 -hda bootloader.bin -serial stdio
-
 .PHONY: clean
 
 clean:
 	rm $(elf_files) bootloader.elf
+	cd kernel; cargo clean
 

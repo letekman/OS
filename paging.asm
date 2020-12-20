@@ -16,7 +16,7 @@ SetupPaging:
     add edi, 0x1000
 
     mov ebx, 0x00000003
-    mov ecx, 512 ; Add 512 entires
+    mov ecx, 0x200 ; Add 512 entires
 
     .SetEntry:
         mov dword [edi], ebx

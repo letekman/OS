@@ -15,10 +15,10 @@ pub unsafe fn sendEOI(irq: u8) -> () {
     io_ports::outb(PIC_EOI, PIC1_COMMAND);
 }
 pub unsafe fn set_irq_mask(mut irq_line: u8) {
-    let mut port: u16;
-    let mut value: u8;
+    let port: u16;
+    let value: u8;
  
-    if(irq_line < 8) {
+    if irq_line < 8 {
         port = PIC1_DATA;
     } else {
         port = PIC2_DATA;
@@ -28,10 +28,10 @@ pub unsafe fn set_irq_mask(mut irq_line: u8) {
     io_ports::outb(value, port);      
 }
 pub unsafe fn clear_irq_mask(mut irq_line: u8) {
-    let mut port: u16;
-    let mut value: u8;
+    let port: u16;
+    let value: u8;
 
-    if(irq_line < 8) {
+    if irq_line < 8 {
         port = PIC1_DATA;
     } else {
         port = PIC2_DATA;

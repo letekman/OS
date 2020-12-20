@@ -47,12 +47,30 @@ SECTIONS
         *(.data);
         librust_os.a(*);
         FILL(0x00);
-        . = ALIGN(0x4000);
+        . = ALIGN(0x10000);
     }
     .idt BLOCK(0x1000) :
     {
         _IDT = .;
         . += 0x1000;
     }
+    . = 0x19000;
+    .stack BLOCK(0xF000) :
+    {
+        _STACK = 0x30000;
+    }
+    . = 0x30000;
+    .tar_file BLOCK(0x10000) :
+    {
+        _TAR_FILE = .;
+    }
+    . = 0x40000;
+    . = 0x100000;
     
+    _HEAP_SIZE = 0x100000;
+    .heap BLOCK(0x100000) :
+    {
+        _HEAP_START = .;
+    }
+    . = 0x200000;
 }

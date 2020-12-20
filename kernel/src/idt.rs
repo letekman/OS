@@ -1,5 +1,3 @@
-
-use crate::io_ports;
 use crate::isr_handlers;
 use crate::PIC8259;
 
@@ -45,7 +43,6 @@ macro_rules! handler {
                 save_scratch_registers!();
                 llvm_asm!("mov rdi, rsp
                       add rdi, 9*8 // calculate exception stack frame pointer
-                      // sub rsp, 8 (stack is aligned already)
                       call ${0:c}"
                       :: "i"($name as
                              extern "C" fn(&ExceptionStackFrame))
@@ -53,9 +50,34 @@ macro_rules! handler {
 
                 restore_scratch_registers!();
                 llvm_asm!("
-                      // add rsp, 8 (undo stack alignment; not needed anymore)
                       iretq"
                       :::: "intel", "volatile");
+                ::core::intrinsics::unreachable();
+            }
+        }
+        wrapper
+    }}
+}
+macro_rules! handler_with_error_code {
+    ($name: expr) => {{
+        #[naked]
+        extern "C" fn wrapper() -> ! {
+            unsafe {
+                save_scratch_registers!();
+                llvm_asm!("
+                    mov rsi, [rsp + 9*8] // load error code into rsi
+                    mov rdi, rsp
+                    add rdi, 10*8 // calculate exception stack frame pointer
+                    sub rsp, 8 // align the stack pointer
+                    call ${0:c}
+                    " :: "i"($name as 
+                             extern "C" fn(&ExceptionStackFrame, u64))
+                    : "rdi","rsi" : "intel");
+                restore_scratch_registers!();
+                llvm_asm!("
+                    add rsp, 8 // pop error code
+                    iretq" 
+                    :::: "intel", "volatile");
                 ::core::intrinsics::unreachable();
             }
         }
@@ -65,11 +87,11 @@ macro_rules! handler {
 #[derive(Debug)]
 #[repr(C)]
 pub struct ExceptionStackFrame {
-    instruction_pointer: u64,
-    code_segment: u64,
-    cpu_flags: u64,
-    stack_pointer: u64,
-    stack_segment: u64,
+    pub instruction_pointer: u64,
+    pub code_segment: u64,
+    pub cpu_flags: u64,
+    pub stack_pointer: u64,
+    pub stack_segment: u64,
 }
 #[repr(C, packed)]
 struct IDTR {
@@ -137,7 +159,6 @@ pub unsafe fn load_idt() -> () {
         limit: 256 * 16 - 1,
         location: _IDT.as_ptr() as u64
     };
-    //println!("&IDTR: {:#X}", &idtr as *const _ as u64);
     let mut ptr: *mut u16 = &idtr as *const _ as *mut u16;
     // println!("IDTR1: {:#X}", *(ptr) as u64);
     // println!("IDTR2: {:#X}", *(ptr.offset(1)) as u64);
@@ -168,13 +189,13 @@ pub unsafe fn init_idt() -> () {
     _IDT[6] = IDTEntry::init_entry(handler!(isr_handlers::invalid_opcode), 0);
     _IDT[7] = IDTEntry::init_entry(handler!(isr_handlers::device_not_avaiable), 0);
     _IDT[8] = IDTEntry::init_entry(handler!(isr_handlers::double_fault), 0);
-    //_IDT[9] = IDTEntry::init_entry(handler!(isr_handlers::div_zero), 0);
+    _IDT[9] = IDTEntry::init_entry(handler!(isr_handlers::debug), 0);
     _IDT[10] = IDTEntry::init_entry(handler!(isr_handlers::invalid_tss), 0);
     _IDT[11] = IDTEntry::init_entry(handler!(isr_handlers::segment_not_present), 0);
     _IDT[12] = IDTEntry::init_entry(handler!(isr_handlers::stack_segment_fault), 0);
     _IDT[13] = IDTEntry::init_entry(handler!(isr_handlers::general_protect_fault), 0);
-    _IDT[14] = IDTEntry::init_entry(handler!(isr_handlers::page_fault), 0);
-    //_IDT[15] = IDTEntry::init_entry(handler!(isr_handlers::div_zero), 0);
+    _IDT[14] = IDTEntry::init_entry(handler_with_error_code!(isr_handlers::page_fault), 0);
+    _IDT[15] = IDTEntry::init_entry(handler!(isr_handlers::debug), 0);
     _IDT[16] = IDTEntry::init_entry(handler!(isr_handlers::x87_floating_point), 0);
     _IDT[17] = IDTEntry::init_entry(handler!(isr_handlers::alignment_check), 0);
     _IDT[18] = IDTEntry::init_entry(handler!(isr_handlers::machine_check), 0);

@@ -4,6 +4,7 @@ extern dataseg
 extern CheckCPUID
 extern SetupPaging
 extern CheckLongMode
+extern _STACK
 
 bits 16
 
@@ -31,8 +32,11 @@ Start64:
     mov gs, ax                    ; Set the G-segment to the A-register.
     mov ss, ax                    ; Set the stack segment to the A-register.
 
+    mov rbp, _STACK
+    mov rsp, _STACK
+
     mov edi, 0xB8000              ; Set the destination index to 0xB8000.
-    mov rax, 0x1F201F201F201F20   ; Set the A-register to 0x1F201F201F201F20.
+    mov rax, 0x0120012001200120   ; Set the A-register to 0x1F201F201F201F20.
     mov ecx, 500  
     rep stosq
 

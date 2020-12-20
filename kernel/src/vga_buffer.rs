@@ -2,6 +2,7 @@ use core::fmt;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
+use crate::io_ports;
 
 lazy_static! {
     /// A global `Writer` instance that can be used for printing to the VGA text buffer.
@@ -9,6 +10,7 @@ lazy_static! {
     /// Used by the `print!` and `println!` macros.
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
+        row_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     });
@@ -74,6 +76,7 @@ struct Buffer {
 /// `core::fmt::Write` trait.
 pub struct Writer {
     column_position: usize,
+    row_position: usize,
     color_code: ColorCode,
     buffer: &'static mut Buffer,
 }
@@ -101,6 +104,10 @@ impl Writer {
                 self.column_position += 1;
             }
         }
+        
+        unsafe {
+            self.update_cursor(self.column_position as u8);
+        }
     }
 
     /// Writes the given ASCII string to the buffer.
@@ -113,6 +120,8 @@ impl Writer {
             match byte {
                 // printable ASCII byte or newline
                 0x20..=0x7e | b'\n' => self.write_byte(byte),
+                //backspace
+                0x08 => unsafe{self.backspace()},
                 // not part of printable ASCII range
                 _ => self.write_byte(0xfe),
             }
@@ -141,6 +150,26 @@ impl Writer {
             self.buffer.chars[row][col].write(blank);
         }
     }
+    unsafe fn update_cursor(&self, x: u8) {
+        let pos: u16 = ((BUFFER_HEIGHT - 1)as u16 * BUFFER_WIDTH as u16) as u16 + x as u16;
+
+        io_ports::outb(0x0f, 0x3d4);
+        io_ports::outb((pos & 0xff) as u8, 0x3d5);
+        io_ports::outb(0x0e, 0x3d4);
+        io_ports::outb(((pos >> 8) & 0xff) as u8, 0x3d5);
+
+    }
+    unsafe fn backspace(&mut self) {
+        if self.column_position > 0{
+            self.column_position -= 1;
+            self.buffer.chars[BUFFER_HEIGHT - 1][self.column_position].write(ScreenChar {
+                ascii_character: ' ' as u8,
+                color_code: self.color_code,
+            });
+            self.update_cursor(self.column_position as u8);
+
+        }
+    }
 }
 
 impl fmt::Write for Writer {
@@ -167,5 +196,9 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+    unsafe{
+        asm!("cli", options(nomem, nostack));
+        WRITER.lock().write_fmt(args).unwrap();
+        asm!("sti", options(nomem, nostack));
+    }
 }

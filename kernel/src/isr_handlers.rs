@@ -6,22 +6,19 @@ use crate::idt;
 
 pub extern "C" fn isr0(stack_frame: &idt::ExceptionStackFrame) {
     unsafe{
+        //print!(".");
         PIC8259::sendEOI(0);
     }
 
 }
 
 pub extern "C" fn isr1(stack_frame: &idt::ExceptionStackFrame) {
-    use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
-    let mut keyboard = Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore);
     unsafe{
         let scancode: u8 = io_ports::inb(0x60);
-        if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
-            if let Some(key) = keyboard.process_keyevent(key_event) {
-                match key {
-                    DecodedKey::Unicode(character) => print!("{}", character),
-                    DecodedKey::RawKey(key) => print!("{:?}", key),
-                }
+        use crate::keyboard;
+        if let Some(key) = keyboard::getKey(scancode){
+            if let Some(c) = key.toChar(){
+                print!("{}", c);
             }
         }
         PIC8259::sendEOI(1);
@@ -31,8 +28,6 @@ pub extern "C" fn isr1(stack_frame: &idt::ExceptionStackFrame) {
 
 pub extern "C" fn isr2(stack_frame: &idt::ExceptionStackFrame) {
     unsafe{
-
-        println!("isr2 :(");
         PIC8259::sendEOI(2);
         PIC8259::sendEOI(10);
     }    
@@ -41,86 +36,104 @@ pub extern "C" fn isr2(stack_frame: &idt::ExceptionStackFrame) {
 
 
 pub extern "C" fn div_zero(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("DIVIDE BY ZERO");
+    serial_println!("{:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn debug(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("DEBUG");
+    println!("DEBUG");
 }
 
 pub extern "C" fn non_maskable_interrupt(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("NON_MASKABLE_INTERRUPT");
+    serial_println!("NON_MASKABLE_INTERRUPT: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn breakpoint(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("breakpoint");
+    serial_println!("breakpoint: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn overflow(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("overflow");
+    serial_println!("overflow: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn bound_range_exceeded(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("bound_range_exceeded");
+    serial_println!("bound_range_exceeded: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn invalid_opcode(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("invalid_opcode");
+    serial_println!("invalid_opcode: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn device_not_avaiable(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("device_not_avaiable");
+    serial_println!("device_not_avaiable: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn double_fault(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("DOUBLE FAULT");
+    serial_println!("DOUBLE FAULT: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn invalid_tss(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("INVALID TSS");
+    serial_println!("INVALID TSS: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn segment_not_present(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("SEGMENT NOT PRESENT");
+    serial_println!("SEGMENT NOT PRESENT: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn stack_segment_fault(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("STACK SEGMENT FAULT");
+    serial_println!("STACK SEGMENT FAULT: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn general_protect_fault(stack_frame: &idt::ExceptionStackFrame) {
     
-    serial_println!("GENERAL PROTECTION FAULT");
-
+    serial_println!("GENERAL PROTECTION FAULT: {:#?}", stack_frame);
+    loop{}
 }
 
-pub extern "C" fn page_fault(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("PAGE FAULT");
+pub extern "C" fn page_fault(stack_frame: &idt::ExceptionStackFrame, error_code: u64){ 
+    serial_println!("PAGE FAULT: {:#?}", stack_frame);
+    loop{}
 }
 
 
 pub extern "C" fn x87_floating_point(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("x87_floating_point");
+    serial_println!("x87_floating_point: {:#?}", stack_frame);
+    loop{}
 }
 
 
 pub extern "C" fn alignment_check(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("alignment_check");
+    serial_println!("alignment_check: {:#?}", stack_frame);
+    loop{}
 }
 
 
 pub extern "C" fn machine_check(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("machine check");
+    serial_println!("machine check: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn simd(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("simd");
+    serial_println!("simd: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn virtualization(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("virtualization");
+    serial_println!("virtualization: {:#?}", stack_frame);
+    loop{}
 }
 
 pub extern "C" fn security_exception(stack_frame: &idt::ExceptionStackFrame){ 
-    serial_println!("security_exception");
+    serial_println!("security_exception: {:#?}", stack_frame);
+    loop{}
 }
