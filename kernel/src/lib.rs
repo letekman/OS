@@ -10,6 +10,8 @@
 #![feature(new_uninit)]
 use core::panic::PanicInfo;
 use alloc::vec::Vec;
+use alloc::string::String;
+
 
 extern crate alloc;
 
@@ -24,10 +26,18 @@ mod keyboard;
 mod PIC8259;
 pub mod heap;
 mod tar_driver;
+mod filesystem;
+mod cli;
 
 
 use alloc::boxed::Box;
 mod idt;
+
+extern {
+    static mut _RootFile_Size: u64;
+    static mut _RootFile: u64;
+} 
+
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Booted");
@@ -38,14 +48,53 @@ pub extern "C" fn _start() -> ! {
         PIC8259::set_irq_mask(1);
         PIC8259::set_irq_mask(2);
         idt::load_idt();
-        
+        println!("{:#x}", _RootFile_Size);
+        println!("{:#p}", &_RootFile);
         //divide_by_zero();
-        //unsafe { *(0xdeadbeaf as *mut u64) = 42 };
-        println!("10: {}", tar_driver::oct_to_bin(['0','0','0','0','0','0','0','0','0','1','2','\0']))
-    }
+
+        let file = tar_driver::File::new(&mut _RootFile).unwrap();
+        let rootfile = filesystem::initVFS(file);
+        // println!("rootfile {}", rootfile.name);
+        // println!("rootfile {}", rootfile.name);
+
+        // // for file in rootfile.files {
+        // //     println!("file: {:#?}", file);
+        // // }
+        // // for dir in rootfile.directories {
+        // //     serial_println!("NEW DIRECTORY");
+        // //     serial_println!("dir: {:#?}", dir);
+        // //     for file in dir.files {
+        // //         serial_println!("file: {:#?}", file);
+        // //     }
+        // // }
+        for i in 0..25{
+            println!();
+        }
+        println!("{}", rootfile.directories[0].files[0].get_content());
+
+        cli::init(&rootfile as *const _ as u64);
+        //println!("NICE");
+        // //unsafe { *(0xdeadbeaf as *mut u64) = 42 };
+        // let file2 = tar_driver::File::new(file.next, "anotherfile.txt").unwrap();
+        // let file3 = tar_driver::File::new(file2.next, "third.txt").unwrap();
+        // let file4 = tar_driver::File::new(file3.next, "4th.txt");
+
+        
+        // serial_println!("file1: {:#?}", file);
+        // serial_println!("file2: {:#?}", file2);
+        // serial_println!("file2: {:#?}", file3);
+        // match file4 {
+        //     Some(x) => serial_println!("file4: {:#?}", x),
+        //     None => println!("EVEN MORE SUCCESS")
+        // }
+        // //println!("head: {}", _RootFile);
+      
+        //println!("10: {}", tar_driver::oct_to_bin(['2','1','0','0','0','0','0','0','0','0','0','\0']))
+        
 
     loop {
         
+    }
     }
 }
 fn divide_by_zero() {

@@ -1,4 +1,4 @@
-elf_files = bootloader.o print.o readDisk.o secondStage.o gdt_64.o CPUID.o paging.o
+elf_files = bootloader.o print.o readDisk.o secondStage.o gdt_64.o CPUID.o paging.o binaries.o
 linker_file = linker.ld
 compile: $(elf_files) $(linker_file)
 	cd kernel; cargo +nightly build --release

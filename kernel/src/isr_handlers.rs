@@ -2,6 +2,7 @@
 use crate::io_ports;
 use crate::PIC8259;
 use crate::idt;
+use crate::cli;
 
 
 pub extern "C" fn isr0(stack_frame: &idt::ExceptionStackFrame) {
@@ -17,9 +18,10 @@ pub extern "C" fn isr1(stack_frame: &idt::ExceptionStackFrame) {
         let scancode: u8 = io_ports::inb(0x60);
         use crate::keyboard;
         if let Some(key) = keyboard::getKey(scancode){
-            if let Some(c) = key.toChar(){
-                print!("{}", c);
-            }
+            cli::print_to_cli(key);
+            // if let Some(c) = key.toChar(){
+            //     //print!("{}", c);
+            // }
         }
         PIC8259::sendEOI(1);
     }

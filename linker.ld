@@ -12,6 +12,7 @@ INPUT (
     gdt_64.o
     paging.o
     CPUID.o
+    binaries.o
     librust_os.a
 )
 
@@ -45,26 +46,22 @@ SECTIONS
     {
         *(.text);
         *(.data);
+        binaries.o(.rodata);
         librust_os.a(*);
-        FILL(0x00);
-        . = ALIGN(0x10000);
+        FILL(0xDEAD);
+        . = 0x12000;
     }
     .idt BLOCK(0x1000) :
     {
         _IDT = .;
         . += 0x1000;
     }
-    . = 0x19000;
+    . = 0x29000;
     .stack BLOCK(0xF000) :
     {
-        _STACK = 0x30000;
+        _STACK = 0x40000;
     }
-    . = 0x30000;
-    .tar_file BLOCK(0x10000) :
-    {
-        _TAR_FILE = .;
-    }
-    . = 0x40000;
+    . = 0x60000;
     . = 0x100000;
     
     _HEAP_SIZE = 0x100000;

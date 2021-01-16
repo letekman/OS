@@ -3,6 +3,7 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use crate::io_ports;
+use alloc::string::String;
 
 lazy_static! {
     /// A global `Writer` instance that can be used for printing to the VGA text buffer.
@@ -82,6 +83,9 @@ pub struct Writer {
 }
 
 impl Writer {
+    pub fn get_color(&mut self) -> ColorCode{
+        self.color_code
+    }
     /// Writes an ASCII byte to the buffer.
     ///
     /// Wraps lines at `BUFFER_WIDTH`. Supports the `\n` newline character.
@@ -106,7 +110,7 @@ impl Writer {
         }
         
         unsafe {
-            self.update_cursor(self.column_position as u8);
+            update_cursor(self.column_position as u8);
         }
     }
 
@@ -123,6 +127,7 @@ impl Writer {
                 //backspace
                 0x08 => unsafe{self.backspace()},
                 // not part of printable ASCII range
+                0x0d => {},
                 _ => self.write_byte(0xfe),
             }
         }
@@ -150,23 +155,15 @@ impl Writer {
             self.buffer.chars[row][col].write(blank);
         }
     }
-    unsafe fn update_cursor(&self, x: u8) {
-        let pos: u16 = ((BUFFER_HEIGHT - 1)as u16 * BUFFER_WIDTH as u16) as u16 + x as u16;
-
-        io_ports::outb(0x0f, 0x3d4);
-        io_ports::outb((pos & 0xff) as u8, 0x3d5);
-        io_ports::outb(0x0e, 0x3d4);
-        io_ports::outb(((pos >> 8) & 0xff) as u8, 0x3d5);
-
-    }
+    
     unsafe fn backspace(&mut self) {
-        if self.column_position > 0{
+        if self.column_position > 1{
             self.column_position -= 1;
             self.buffer.chars[BUFFER_HEIGHT - 1][self.column_position].write(ScreenChar {
                 ascii_character: ' ' as u8,
                 color_code: self.color_code,
             });
-            self.update_cursor(self.column_position as u8);
+            update_cursor(self.column_position as u8);
 
         }
     }
@@ -178,7 +175,35 @@ impl fmt::Write for Writer {
         Ok(())
     }
 }
+pub unsafe fn update_cursor(x: u8) {
+    let pos: u16 = ((BUFFER_HEIGHT - 1)as u16 * BUFFER_WIDTH as u16) as u16 + x as u16;
 
+    io_ports::outb(0x0f, 0x3d4);
+    io_ports::outb((pos & 0xff) as u8, 0x3d5);
+    io_ports::outb(0x0e, 0x3d4);
+    io_ports::outb(((pos >> 8) & 0xff) as u8, 0x3d5);
+
+}
+pub fn get_cmd() -> String{
+    let mut s: String = String::from("");
+    for c in 1..BUFFER_WIDTH{
+        s.push(WRITER.lock().buffer.chars[BUFFER_HEIGHT - 1][c].read().ascii_character as char);
+    }
+    return String::from(s.trim());
+}
+pub fn clear_cmd_row(){
+    for c in 0..BUFFER_WIDTH{
+        let writer = &mut WRITER.lock();
+        let color = writer.get_color();
+        writer.buffer.chars[BUFFER_HEIGHT - 1][c].write(
+            ScreenChar {
+                ascii_character: 32,
+                color_code: color
+            }
+        );
+        writer.column_position = 0;
+    }
+}
 /// Like the `print!` macro in the standard library, but prints to the VGA text buffer.
 #[macro_export]
 macro_rules! print {

@@ -27,7 +27,7 @@ pub static mut keyboard: Keyboard =  Keyboard {
 };
 
 pub struct Key {
-    key_type: KeyType,
+    pub key_type: KeyType,
 }
 impl Key {
     fn new(key_type: KeyType) -> Self {
@@ -45,7 +45,10 @@ impl Key {
             KeyType::Digit(d) => ('0' as u8 + d) as char,
             KeyType::Character(c) => unsafe {
                 if keyboard.left_shift_pressed || keyboard.right_shift_pressed {
-                    (c as u8 + 'A' as u8 - 'a' as u8) as char
+                    match c {
+                        '-' => '_',
+                        _ => (c as u8 + 'A' as u8 - 'a' as u8) as char,
+                    }
                 }
                 else {
                     c
