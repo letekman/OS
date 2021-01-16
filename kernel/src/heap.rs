@@ -40,9 +40,12 @@ pub unsafe fn print_heap(){
 }
 
 pub unsafe fn merge_free_segments(){
-
+    // serial_println!("yuuup");
     let mut cur_segment: *mut MemorySegment = ALLOCATOR.first_segment;
     while (*cur_segment).next_segment != 0 as *mut MemorySegment {
+        // serial_println!("yuuup1");
+        // serial_println!("CURRR: {:p}",cur_segment);
+        // serial_println!("CURRR: {:x?}",*cur_segment);
         if (*cur_segment).is_free && (*(*cur_segment).next_segment).is_free {
             (*cur_segment).size +=  (*(*cur_segment).next_segment).size + size_of::<MemorySegment>() as u32;
             (*cur_segment).next_segment = (*(*cur_segment).next_segment).next_segment;
@@ -52,6 +55,7 @@ pub unsafe fn merge_free_segments(){
         }
         cur_segment = (*cur_segment).next_segment;
     }
+
 }
 
 #[derive(Debug)]
@@ -76,11 +80,7 @@ impl Aloc{
 
 unsafe impl GlobalAlloc for Aloc {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        let remainder = layout.size() % layout.align();
-        let mut size: u32 = (layout.size() - remainder) as u32;
-        if remainder != 0 {
-            size += layout.align() as u32;
-        }
+        let mut size: u32 = layout.size() as u32;
         let pointer_size: u32 = size_of::<*mut MemorySegment>() as u32;
         let segment_header_size: u32 = size_of::<MemorySegment>() as u32;
         let mut cur_segment: *mut MemorySegment = ALLOCATOR.first_segment;
@@ -88,32 +88,37 @@ unsafe impl GlobalAlloc for Aloc {
         loop {
             // serial_println!("cur_ptr: {:p}, size {:x}",cur_segment, (*cur_segment).size );
             // serial_println!("cur_segment: {:x?}, layout: {:x?}",*cur_segment, layout);
+            // print_heap();
             // serial_println!();
             if (*cur_segment).size >= size && (*cur_segment).is_free == true {
                 
                 // serial_println!("size1: {:#x}, size2: {:#x}", (*cur_segment).size, size);
                 // serial_println!("cur_segmentptr: {:p}",cur_segment);
-                (*cur_segment).is_free = false;
                 //serial_println!("cur_segmentAAAA: {:x?}",*cur_segment);
-
                 if (*cur_segment).size - segment_header_size > size {
-                    let mut new_segment: *mut MemorySegment = (add_bytes!(cur_segment, size + segment_header_size)) as *mut MemorySegment;
-                    //serial_println!("cur_segment: {:x?}\n cur_ptr: {:p}\n next_ptr: {:p}\n new_segment: {:x?}\n layout {:#x?}",*cur_segment, cur_segment,new_segment, *new_segment,  layout);
-                    (*new_segment).size = (*cur_segment).size - segment_header_size - size;
-                    (*new_segment).next_segment = 0 as *mut MemorySegment;
-                    (*new_segment).is_free = true;
 
+
+                    let mut new_segment: *mut MemorySegment = (add_bytes!(cur_segment, size + segment_header_size)) as *mut MemorySegment;
+                    (*new_segment).size = (*cur_segment).size - segment_header_size - size;
+                    (*new_segment).next_segment = (*cur_segment).next_segment as *mut MemorySegment;
+                    (*new_segment).is_free = true;
+                    
                     (*cur_segment).next_segment = new_segment;
                     (*cur_segment).size = size;
+                    //serial_println!("cur_segment: {:x?}\n cur_ptr: {:p}\n next_ptr: {:p}\n new_segment: {:x?}\n layout {:#x?}",*cur_segment, cur_segment,new_segment, *new_segment,  layout);
                     
-                serial_println!("cur: {:x?}",(*cur_segment));
+                //serial_println!("cur: {:x?}",(*cur_segment));
+
+                }else {
 
                 }
+                (*cur_segment).is_free = false;
+                
 
 
                 let x = add_bytes!(cur_segment, segment_header_size) as *mut u8;
 
-                serial_println!("x: {:p}",x);
+                //serial_println!("x: {:p}",x);
 
                 return x;
             }
@@ -127,14 +132,20 @@ unsafe impl GlobalAlloc for Aloc {
     }
 
     unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
-        let segment_header_size = size_of::<MemorySegment>();
-        let segment: *mut MemorySegment = sub_bytes!(_ptr, segment_header_size) as *mut MemorySegment;
-        serial_println!("cur_segmentDEALLOC: {:p}",segment);
-        serial_println!("cur_segmentDEALLOC: {:x?}",*segment);
-        (*segment).is_free = true;
-
-        merge_free_segments();
         
+        // //serial_println!("DEALOC------------------------------------------------------------------------------------------------------------------------");
+        // let segment_header_size = size_of::<MemorySegment>();
+        // let segment: *mut MemorySegment = sub_bytes!(_ptr, segment_header_size) as *mut MemorySegment;
+        // // serial_println!("cur_segmentDEALLOC: {:p}",segment);
+        // // serial_println!("cur_segmentDEALLOC: {:x?}",*segment);
+        // (*segment).is_free = true;
+        
+        // //print_heap();
+        // merge_free_segments();
+        
+        //print_heap();
+        //serial_println!("not failed");
+
     }
 
 }
