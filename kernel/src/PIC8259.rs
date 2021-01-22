@@ -8,7 +8,18 @@ const PIC_EOI: u8 = 0x20;
 const INIT_COMMAND: u8 = 0x11;
 const MODE_8086: u8 = 0x01;
 
-pub unsafe fn sendEOI(irq: u8) -> () {
+
+pub unsafe fn stop_raising_irq() -> () {
+    set_irq_mask(0);
+    set_irq_mask(1);
+    set_irq_mask(2);
+}
+pub unsafe fn start_raising_irq() -> () {
+    clear_irq_mask(0);
+    clear_irq_mask(1);
+    clear_irq_mask(2);
+}
+pub unsafe fn send_eoi(irq: u8) -> () {
     if irq >= 8 {
         io_ports::outb(PIC_EOI, PIC2_COMMAND);
     }

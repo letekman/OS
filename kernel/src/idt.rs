@@ -1,5 +1,5 @@
 use crate::isr_handlers;
-use crate::PIC8259;
+use crate::pic8259;
 
 
 
@@ -58,7 +58,7 @@ macro_rules! handler {
         wrapper
     }}
 }
-macro_rules! handler_with_error_code {
+macro_rules! handler_with__error_code {
     ($name: expr) => {{
         #[naked]
         extern "C" fn wrapper() -> ! {
@@ -142,16 +142,6 @@ impl IDTEntry{
             zero: zero
         }
     }
-} 
-pub unsafe fn print_rbp() -> () {
-    let mut base_pointer: *const usize;
-    llvm_asm!("mov rax, rbp" : "={rax}"(base_pointer) ::: "intel");
-    serial_println!("RBP: {}", base_pointer as usize);
-}
-pub unsafe fn print_rsp() -> () {
-    let mut base_pointer: *const usize;
-    llvm_asm!("mov rax, rsp" : "={rax}"(base_pointer) ::: "intel");
-    serial_println!("RSP: {}", base_pointer as usize);
 }
 pub unsafe fn load_idt() -> () {
 
@@ -159,20 +149,16 @@ pub unsafe fn load_idt() -> () {
         limit: 256 * 16 - 1,
         location: _IDT.as_ptr() as u64
     };
-    let mut ptr: *mut u16 = &idtr as *const _ as *mut u16;
-    // println!("IDTR1: {:#X}", *(ptr) as u64);
-    // println!("IDTR2: {:#X}", *(ptr.offset(1)) as u64);
-    // println!("IDTR.location: {:#X}", idtr.location as u64);
-    // println!("isr1: {:#X}", isr1 as u64);
-    // print!("YO{}", 2);
+    let ptr: *mut u16 = &idtr as *const _ as *mut u16;
     
-    PIC8259::init(0x20, 0x28);
+    pic8259::init(0x20, 0x28);
     init_idt();
     llvm_asm!(
         "
         lidt [$0]
         sti
-        " :: "r"(ptr) : "memory" : "intel", "volatile");
+        " :: "r"(ptr) : "memory" : "intel", "volatile"
+    );
 }
 
 pub unsafe fn init_idt() -> () {
@@ -194,7 +180,7 @@ pub unsafe fn init_idt() -> () {
     _IDT[11] = IDTEntry::init_entry(handler!(isr_handlers::segment_not_present), 0);
     _IDT[12] = IDTEntry::init_entry(handler!(isr_handlers::stack_segment_fault), 0);
     _IDT[13] = IDTEntry::init_entry(handler!(isr_handlers::general_protect_fault), 0);
-    _IDT[14] = IDTEntry::init_entry(handler_with_error_code!(isr_handlers::page_fault), 0);
+    _IDT[14] = IDTEntry::init_entry(handler_with__error_code!(isr_handlers::page_fault), 0);
     _IDT[15] = IDTEntry::init_entry(handler!(isr_handlers::debug), 0);
     _IDT[16] = IDTEntry::init_entry(handler!(isr_handlers::x87_floating_point), 0);
     _IDT[17] = IDTEntry::init_entry(handler!(isr_handlers::alignment_check), 0);
@@ -203,9 +189,7 @@ pub unsafe fn init_idt() -> () {
     _IDT[20] = IDTEntry::init_entry(handler!(isr_handlers::virtualization), 0);
     _IDT[30] = IDTEntry::init_entry(handler!(isr_handlers::security_exception), 0);
 
-    PIC8259::clear_irq_mask(0);
-    PIC8259::clear_irq_mask(1);
-    PIC8259::clear_irq_mask(2);
+    pic8259::start_raising_irq();
     _IDT[32] = IDTEntry::init_entry(handler!(isr_handlers::isr0), 0);
     _IDT[33] = IDTEntry::init_entry(handler!(isr_handlers::isr1), 0);
     _IDT[34] = IDTEntry::init_entry(handler!(isr_handlers::isr2), 0);

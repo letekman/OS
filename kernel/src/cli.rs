@@ -2,16 +2,14 @@ use crate::vga_buffer;
 use crate::keyboard::{Key, KeyType};
 use alloc::string::String;
 use crate:: filesystem;
-use crate::heap;
-
-pub static mut root_file_address: u64 = 0;
+pub static mut ROOT_FILE_ADDRESS: u64 = 0;
 pub unsafe fn init(root_address: u64){
     print!(">");
-    root_file_address = root_address;
+    ROOT_FILE_ADDRESS = root_address;
     vga_buffer::update_cursor(1);
 }
 unsafe fn parse_cmd(cmd: String){
-    let rootfile: &mut filesystem::VirtualDirectory = &mut*(root_file_address as *mut filesystem::VirtualDirectory); 
+    let rootfile: &mut filesystem::VirtualDirectory = &mut*(ROOT_FILE_ADDRESS as *mut filesystem::VirtualDirectory); 
     vga_buffer::clear_cmd_row();
     println!("{}:\n", cmd);
     let mut split_cmd = cmd.split_ascii_whitespace();
@@ -24,7 +22,7 @@ unsafe fn parse_cmd(cmd: String){
                 cd(rootfile, arg);
             }
             else{
-                println!("Usage: cd <arg>");
+                println!("Usage: cd <foldername> or cd .. to go up one directory");
             }
         },
         Some("cat") => {
@@ -32,8 +30,17 @@ unsafe fn parse_cmd(cmd: String){
                 cat(rootfile, arg);
             }
             else{
-                println!("Usage: cat <arg>");
+                println!("Usage: cat <filename>");
             }
+        },
+        Some("echo") => {
+            if let Some(arg) = split_cmd.next(){
+                print!("{}", arg);
+                while let Some(next_word) = split_cmd.next(){
+                    print!(" {}", next_word);
+                }
+            }
+            println!();
         },
         _ => {
             println!("Command not found");
@@ -53,11 +60,14 @@ pub unsafe fn ls(rootfile: &mut filesystem::VirtualDirectory){
     
 }
 pub unsafe fn cd(rootfile: &mut filesystem::VirtualDirectory, dir: &str){
+    if dir == ".."{
+        if rootfile.name != "root" {
+            ROOT_FILE_ADDRESS = rootfile.parent as u64;
+        }
+        return
+    }
     if let Some(x) = rootfile.get_child_by_name(dir) {
-        root_file_address = x as *const _ as u64;
-        // serial_println!("a: {:p}", &rootfile);
-        // serial_println!("b: {:p}", &rootfile.directories[0]);
-        // serial_println!("c: {:x}", root_file_address);
+        ROOT_FILE_ADDRESS = x as *const _ as u64;
     }
     else{
         println!("No directories named '{}' exists", dir);
@@ -77,19 +87,19 @@ pub unsafe fn cat(rootfile: &mut filesystem::VirtualDirectory, filename: &str){
 }
 pub fn help(){    
     println!("Avaiable commands:");
-    println!("help, pwd, ls");
+    println!("help, pwd, ls, cat, cd, echo");
     
 }
 pub unsafe fn print_to_cli(key: Key) {
     match key.key_type {
         KeyType::Enter => {
-            //serial_println!("cli: {}##", vga_buffer::get_cmd());
             parse_cmd(vga_buffer::get_cmd());
         },
         _ => {
-            if let Some(k) = key.toChar() {
+            if let Some(k) = key.to_char() {
                 print!("{}", k);
             }
         }
     }
+
 }

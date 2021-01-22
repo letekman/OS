@@ -2,13 +2,8 @@ use alloc::vec::Vec;
 use crate::tar_driver::File;
 use crate::tar_driver::FileIter;
 use alloc::string::String;
-use core::iter::Enumerate;
 use core::slice;
 use core::fmt;
-pub enum FileType {
-    File,
-    Directory
-}
 pub struct VirtualFile {
     pub file: File,
     pub name: String
@@ -17,17 +12,17 @@ impl VirtualFile {
     pub fn new(file: File, name: &str) -> VirtualFile {
         VirtualFile {
             file: file,
-            name: String::from(name)
+            name: String::from(name).clone()
         }
     }
     pub unsafe fn get_content(&self) -> String{
-        String::from(String::from_utf8(slice::from_raw_parts(self.file.memory_address.offset(64) as *mut u8, self.file.size as usize).to_vec()).unwrap().trim_end_matches('\u{0}'))
+        String::from(String::from_utf8(slice::from_raw_parts(self.file.memory_address.offset(64) as *mut u8, self.file.size as usize).to_vec()).unwrap().trim_end_matches('\u{0}')).clone()
     }
     pub unsafe fn get_name(&self) -> String{
-        String::from(String::from_utf8(self.file.header.filename.to_vec()).unwrap().trim_end_matches('\u{0}'))
+        String::from(String::from_utf8(self.file.header.filename.to_vec()).unwrap().trim_end_matches('\u{0}')).clone()
     }
     pub unsafe fn get_short_name(&self) -> String{
-        String::from(self.name.trim_end_matches('\u{0}'))
+        String::from(self.name.trim_end_matches('\u{0}')).clone()
     }
 }
 impl fmt::Debug for VirtualFile {
@@ -36,7 +31,6 @@ impl fmt::Debug for VirtualFile {
 
             f.debug_struct("File")
              .field("name", &self.get_name())
-             //.field("name", &self.name)
              .field("content", &self.get_content())
              .finish()
         }
@@ -60,8 +54,8 @@ impl fmt::Debug for VirtualDirectory {
 impl VirtualDirectory {
     pub fn new(name: &str, path:  &str, parent: *mut VirtualDirectory) -> VirtualDirectory {
         VirtualDirectory {
-            name: String::from(name),
-            path: String::from(path),
+            name: String::from(name).clone(),
+            path: String::from(path).clone(),
             parent: parent,
             directories: Vec::new(),
             files: Vec::new()
@@ -106,8 +100,8 @@ impl VirtualDirectory {
         return vector
     }
 }
-pub unsafe fn initVFS(root: File) -> VirtualDirectory{
-    let mut rootDir = VirtualDirectory::new("root", "root/", 0 as *mut VirtualDirectory);
+pub unsafe fn init_vfs(root: File) -> VirtualDirectory{
+    let mut root_dir = VirtualDirectory::new("root", "root/", root.memory_address as *mut VirtualDirectory);
     let mut i = 0;
     let iter: FileIter = FileIter::new(root.memory_address);
     for file in iter {
@@ -122,46 +116,41 @@ pub unsafe fn initVFS(root: File) -> VirtualDirectory{
         let paths: Vec<String> = long_name.split('/').map(String::from).collect();
         
         let count = paths.len();
-        let mut curDir: *mut VirtualDirectory= &mut rootDir;
+        let mut cur_dir: *mut VirtualDirectory= &mut root_dir;
         let mut j = 0;
 
         for name in paths {
-
-            // if name.trim_end_matches('\u{0}') == "hello.txt"{
-            //     serial_println!("HEY!");
-            //     continue;
-            // }
             if j == 0 || name.trim_end_matches('\u{0}') == ""{
                 j += 1;
                 continue;
             }
             if j == count - 1 {
                 if file.header.type_flag == 48 || file.header.type_flag == 0 {
-                    (*curDir).files.push(VirtualFile::new(file, name.as_str()));
+                    (*cur_dir).files.push(VirtualFile::new(file, name.as_str()));
                 }
                 else if file.header.type_flag == 53 {
-                    if let Some(folder) = (*curDir).get_child_by_name(&name){
+                    if let Some(_folder) = (*cur_dir).get_child_by_name(&name){
                     }
                     else {
-                        let mut newPath = String::from((*curDir).path.clone());
-                        newPath.push_str(name.as_str());
-                        newPath.push_str("/");
+                        let mut new_path = String::from((*cur_dir).path.clone());
+                        new_path.push_str(name.as_str());
+                        new_path.push_str("/");
         
-                        (*curDir).directories.push(VirtualDirectory::new(&name, &newPath, curDir));
+                        (*cur_dir).directories.push(VirtualDirectory::new(&name, &new_path, cur_dir));
                     }
                 }
                 break;
             }
-            if let Some(folder) = (*curDir).get_child_by_name(&name){
-                curDir = folder;
+            if let Some(folder) = (*cur_dir).get_child_by_name(&name){
+                cur_dir = folder;
 
             }
             else {
-                let mut newPath = String::from((*curDir).path.clone());
-                newPath.push_str(name.as_str());
-                newPath.push_str("/");
+                let mut new_path = String::from((*cur_dir).path.clone());
+                new_path.push_str(name.as_str());
+                new_path.push_str("/");
 
-                (*curDir).directories.push(VirtualDirectory::new(&name, &newPath, curDir));
+                (*cur_dir).directories.push(VirtualDirectory::new(&name, &new_path, cur_dir));
             }
             j += 1;
         }
@@ -169,5 +158,5 @@ pub unsafe fn initVFS(root: File) -> VirtualDirectory{
     i += 1;
     }
 
-    rootDir
+    root_dir
 }

@@ -12,18 +12,12 @@ pub enum KeyType {
 }
 pub struct Keyboard {
     left_shift_pressed: bool,
-    right_shift_pressed: bool,
-    // left_alt_pressed: bool,
-    // right_alt_pressed: bool,
-    // caps_pressed: bool
+    right_shift_pressed: bool
 }
 
-pub static mut keyboard: Keyboard =  Keyboard {
+pub static mut KEYBOARD: Keyboard =  Keyboard {
     left_shift_pressed: false,
     right_shift_pressed: false
-    // left_alt_pressed: false,
-    // right_alt_pressed: false,
-    // caps_pressed: false
 };
 
 pub struct Key {
@@ -32,19 +26,19 @@ pub struct Key {
 impl Key {
     fn new(key_type: KeyType) -> Self {
         match key_type {
-            KeyType::LeftShift => unsafe {keyboard.left_shift_pressed = true},
-            KeyType::RightShift => unsafe {keyboard.right_shift_pressed = true},
-            KeyType::LeftShiftReleased => unsafe {keyboard.left_shift_pressed = false},
-            KeyType::RightShiftReleased => unsafe {keyboard.right_shift_pressed = false},
+            KeyType::LeftShift => unsafe {KEYBOARD.left_shift_pressed = true},
+            KeyType::RightShift => unsafe {KEYBOARD.right_shift_pressed = true},
+            KeyType::LeftShiftReleased => unsafe {KEYBOARD.left_shift_pressed = false},
+            KeyType::RightShiftReleased => unsafe {KEYBOARD.right_shift_pressed = false},
             _ => {}
         }
         Key {key_type: key_type}
     }
-    pub fn toChar(self) -> Option<char> {
+    pub fn to_char(self) -> Option<char> {
         let c = match self.key_type {
             KeyType::Digit(d) => ('0' as u8 + d) as char,
             KeyType::Character(c) => unsafe {
-                if keyboard.left_shift_pressed || keyboard.right_shift_pressed {
+                if KEYBOARD.left_shift_pressed || KEYBOARD.right_shift_pressed {
                     match c {
                         '-' => '_',
                         _ => (c as u8 + 'A' as u8 - 'a' as u8) as char,
@@ -58,7 +52,7 @@ impl Key {
             KeyType::Space => ' ',
             KeyType::Backspace => 0x08 as char,
             KeyType::Tick => unsafe {
-                if keyboard.left_shift_pressed || keyboard.right_shift_pressed {
+                if KEYBOARD.left_shift_pressed || KEYBOARD.right_shift_pressed {
                     '\"'
                 }
                 else {
@@ -71,7 +65,7 @@ impl Key {
     }
 }
 
-pub fn getKey(scancode: u8) -> Option<Key> {
+pub fn get_key(scancode: u8) -> Option<Key> {
     let result = match scancode {
         0x02 ..= 0x0A => Key::new(KeyType::Digit(scancode - 0x01)),
         0x0B => Key::new(KeyType::Digit(0)),

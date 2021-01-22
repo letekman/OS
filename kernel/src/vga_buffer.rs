@@ -83,7 +83,7 @@ pub struct Writer {
 }
 
 impl Writer {
-    pub fn get_color(&mut self) -> ColorCode{
+    fn get_color(&mut self) -> ColorCode{
         self.color_code
     }
     /// Writes an ASCII byte to the buffer.
